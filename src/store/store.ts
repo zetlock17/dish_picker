@@ -1,9 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
-import todoReducer from './slices/todoSlice';
+import dishReducer from './slices/dishSlice';
 
 const store = configureStore({
     reducer: {
-        todos: todoReducer, // Подключаем редюсер для задач
+        dishes: dishReducer,
     },
 });
 

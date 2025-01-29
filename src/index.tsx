@@ -5,8 +5,8 @@ import store from './store/store';
 import App from './App';
 
 ReactDOM.render(
-    <Provider store={store}> {/* Оборачиваем приложение в Provider */}
+    <Provider store={store}>
         <App />
     </Provider>,
-    document.getElementById('root') // Рендерим в корневой элемент
+    document.getElementById('root')
 );

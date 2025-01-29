@@ -1,11 +1,21 @@
 import React from 'react';
-import './styles/components/header.scss';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import './styles/global.scss';
+import AppHeader from './components/AppHeader';
+import MainPage from './components/MainPage';
+import AccountPage from './components/AccountPage';
+import DishPage from './components/DishPage';
 
 const App: React.FC = () => {
     return (
-        <div>
-            <h1>start</h1>
-        </div>
+        <Router>
+            <AppHeader />
+            <Routes>
+                <Route path="/" element={<MainPage />} />
+                <Route path="/account" element={<AccountPage />} />
+                <Route path="/dish" element={<DishPage />} />
+            </Routes>
+        </Router>
     );
 };
 
