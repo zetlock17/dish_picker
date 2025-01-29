@@ -1,37 +1,50 @@
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface AuthContextType {
-    isAuthenticated: boolean;
-    login: (username: string, password: string) => boolean;
+    isAuth: boolean;
+    login: (username: string, password: string) => Promise<boolean>;
     logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-        const storedUser = localStorage.getItem('user');
-        return !!storedUser;
+    const [isAuth, setIsAuth] = useState<boolean>(() => {
+        const storedIsAuth = localStorage.getItem('isAuth');
+        return storedIsAuth === 'true';
     });
 
-    const login = (username: string, password: string): boolean => {
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            const { username: storedUsername, password: storedPassword } = JSON.parse(storedUser);
-            if (username === storedUsername && password === storedPassword) {
-                setIsAuthenticated(true);
-                return true;
-            }
+    const login = async (username: string, password: string): Promise<boolean> => {
+        const response = await fetch('http://127.0.0.1:8000/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.isAuth) {
+            localStorage.setItem('isAuth', 'true');
+            localStorage.setItem('username', data.username);
+            setIsAuth(true);
+            return true;
+        } else {
+            localStorage.setItem('isAuth', 'false');
+            setIsAuth(false);
+            return false;
         }
-        return false;
     };
 
     const logout = () => {
-        setIsAuthenticated(false);
+        localStorage.setItem('isAuth', 'false');
+        localStorage.removeItem('username');
+        setIsAuth(false);
     };
 
     return (
-        <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+        <AuthContext.Provider value={{ isAuth, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

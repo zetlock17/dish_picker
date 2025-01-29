@@ -7,14 +7,12 @@ interface AccountPageProps {}
 const AccountPage: React.FC<AccountPageProps> = () => {
     const navigate = useNavigate();
     const { logout } = useAuth();
-    const storedUser = localStorage.getItem('user');
+    const storedUsername = localStorage.getItem('username');
 
-    if (!storedUser) {
+    if (!storedUsername) {
         navigate('/login');
         return null;
     }
-
-    const { username } = JSON.parse(storedUser);
 
     const handleLogout = () => {
         logout();
@@ -24,7 +22,7 @@ const AccountPage: React.FC<AccountPageProps> = () => {
     return (
         <div>
             <h2>Информация об аккаунте</h2>
-            <p>Имя пользователя: {username}</p>
+            <p>Имя пользователя: {storedUsername}</p>
             <button onClick={handleLogout}>Выйти</button>
         </div>
     );

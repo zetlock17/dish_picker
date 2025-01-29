@@ -8,8 +8,8 @@ const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const { login } = useAuth();
 
-    const handleLogin = () => {
-        if (login(username, password)) {
+    const handleLogin = async () => {
+        if (await login(username, password)) {
             alert('Авторизация успешна!');
             navigate('/');
         } else {

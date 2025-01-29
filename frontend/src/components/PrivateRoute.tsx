@@ -7,9 +7,9 @@ interface PrivateRouteProps {
 }
 
 const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-    const { isAuthenticated } = useAuth();
+    const { isAuth } = useAuth();
 
-    return isAuthenticated ? children : <Navigate to="/login" />;
+    return isAuth ? children : <Navigate to="/login" />;
 };
 
 export default PrivateRoute;
