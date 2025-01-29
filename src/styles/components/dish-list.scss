@@ -1,0 +1,46 @@
+.dish-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center; /* Центрирование карточек */
+}
+
+.dish-card-link {
+    text-decoration: none;
+    color: inherit;
+    flex: 0 1 300px; /* Фиксированная ширина карточки */
+    max-width: 300px;
+}
+
+.dish-card {
+    width: 100%; /* Обеспечивает фиксированную ширину карточки */
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+    background-color: #fff;
+    transition: transform 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dish-card:hover {
+    transform: scale(1.05);
+}
+
+.dish-card img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+.dish-card h3 {
+    margin: 5px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    max-width: 250px; /* Ограничение ширины заголовка */
+}
