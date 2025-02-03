@@ -33,7 +33,7 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose }) => {
         const newDish = {
             user_id: userId || '',
             name,
-            components, // Send as string, not array
+            components,
             description,
             image,
             time: time ? Number(time) : undefined,

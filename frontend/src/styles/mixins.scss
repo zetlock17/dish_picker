@@ -1,1 +1,23 @@
-// для миксинов (переиспользуемых блоков стилей)
+@mixin flexCenter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@mixin gridLayout($columns, $gap: $spacing-md) {
+  display: grid;
+  grid-template-columns: $columns;
+  grid-template-rows: 1fr;
+  grid-column-gap: $gap;
+}
+
+@mixin card {
+  border: 1px solid $border-color;
+  border-radius: 8px;
+  padding: $spacing-lg;
+  background-color: $background-color;
+}
+
+@mixin transition($property: transform, $duration: 0.2s) {
+  transition: $property $duration;
+}

@@ -1,35 +1,36 @@
-.modal {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
-}
+@import '../variables';
+@import '../mixins';
 
-.modal-content {
-    background-color: #fefefe;
+.modal {
+  @include flexCenter;
+  position: fixed;
+  z-index: 1;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  background-color: $modal-overlay;
+
+  &-content {
+    background-color: $background-color;
     margin: auto;
-    padding: 20px;
-    border: 1px solid #888;
+    padding: $spacing-xl;
+    border: 1px solid $secondary-color;
     width: 80%;
+  }
 }
 
 .close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
+  color: $secondary-color;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
 
-.close:hover,
-.close:focus {
-    color: black;
+  &:hover,
+  &:focus {
+    color: $primary-color;
     text-decoration: none;
     cursor: pointer;
+  }
 }

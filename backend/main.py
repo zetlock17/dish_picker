@@ -8,7 +8,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Разрешить все источники. В продакшене укажите конкретные домены.
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,7 +32,7 @@ def create_tables():
 
     conn = sqlite3.connect(DATABASE_URL_DISHES)
     cursor = conn.cursor()
-    cursor.execute('DROP TABLE IF EXISTS dishes')  # Удаление таблицы, если она уже существует
+    cursor.execute('DROP TABLE IF EXISTS dishes')
     cursor.execute('''
         CREATE TABLE dishes (
             id TEXT PRIMARY KEY,

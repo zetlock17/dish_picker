@@ -1,8 +1,8 @@
+@import '../variables';
+@import '../mixins';
+
 .header {
-    font-size: 20px;
-    background-color: #f0f0f0;
-    display: grid;
-    grid-template-columns: 1fr 3.5fr 0.75fr 0.75fr;
-    grid-template-rows: 1fr;
-    grid-column-gap: 10px;
+  font-size: $spacing-xl;
+  background-color: $header-bg;
+  @include gridLayout(1fr 3.5fr 0.75fr 0.75fr);
 }
