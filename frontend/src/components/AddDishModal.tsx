@@ -17,7 +17,7 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose }) => {
     const [dificulty, setDificulty] = useState<number | ''>('');
     const dispatch = useDispatch();
 
-    const handleAddDish = () => {
+    const handleAddDish = async () => {
         if (!name || !components) {
             alert('Пожалуйста, заполните обязательные поля: Название и Компоненты.');
             return;
@@ -29,23 +29,44 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose }) => {
             return;
         }
 
+        const userId = localStorage.getItem('userId');
         const newDish = {
-            id: Date.now(),
+            user_id: userId || '',
             name,
-            components: components.split(','),
+            components, // Send as string, not array
             description,
             image,
             time: time ? Number(time) : undefined,
             dificulty: dificulty ? Number(dificulty) : undefined,
         };
-        dispatch(addDish(newDish));
-        setName(''); // Очистка поля "Название"
-        setComponents(''); // Очистка поля "Компоненты"
-        setDescription(''); // Очистка поля "Описание"
-        setImage(''); // Очистка поля "URL изображения"
-        setTime(''); // Очистка поля "Время"
-        setDificulty(''); // Очистка поля "Сложность"
-        onClose();
+
+        try {
+            const response = await fetch('http://127.0.0.1:8000/add_dish', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newDish)
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                dispatch(addDish({ ...newDish, id: data.id }));
+                setName('');
+                setComponents('');
+                setDescription('');
+                setImage('');
+                setTime('');
+                setDificulty('');
+                onClose();
+            } else {
+                const errorData = await response.json();
+                alert(`Ошибка при добавлении блюда: ${errorData.detail}`);
+            }
+        } catch (error) {
+            alert('Ошибка при добавлении блюда');
+            console.error(error);
+        }
     };
 
     if (!isOpen) return null;

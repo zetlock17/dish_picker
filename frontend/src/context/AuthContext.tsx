@@ -28,6 +28,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (response.ok && data.isAuth) {
             localStorage.setItem('isAuth', 'true');
             localStorage.setItem('username', data.username);
+            localStorage.setItem('userId', data.id);
             setIsAuth(true);
             return true;
         } else {
@@ -40,6 +41,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const logout = () => {
         localStorage.setItem('isAuth', 'false');
         localStorage.removeItem('username');
+        localStorage.removeItem('userId');
         setIsAuth(false);
     };
 
