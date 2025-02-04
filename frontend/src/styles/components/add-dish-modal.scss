@@ -34,3 +34,18 @@
     cursor: pointer;
   }
 }
+
+.image-upload {
+    margin: 15px 0;
+    text-align: center;
+    
+    .image-preview {
+        margin-top: 10px;
+        
+        img {
+            max-width: 200px;
+            max-height: 200px;
+            object-fit: contain;
+        }
+    }
+}

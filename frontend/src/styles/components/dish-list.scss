@@ -43,3 +43,12 @@
         max-width: 250px; /* Ограничение ширины заголовка */
     }
 }
+
+.error-message {
+    color: red;
+    text-align: center;
+    padding: $spacing-lg;
+    margin: $spacing-lg;
+    border: 1px solid red;
+    border-radius: 8px;
+}

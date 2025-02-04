@@ -1,8 +1,10 @@
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel
 import sqlite3
 import uuid
+import base64
 
 app = FastAPI()
 
@@ -40,7 +42,7 @@ def create_tables():
             name TEXT NOT NULL,
             components TEXT NOT NULL,
             description TEXT,
-            image TEXT,
+            image BLOB,
             time INTEGER,
             dificulty INTEGER,
             FOREIGN KEY (user_id) REFERENCES users (id)
@@ -65,7 +67,6 @@ class DishIn(BaseModel):
     name: str
     components: str
     description: str = None
-    image: str = None
     time: int = None
     dificulty: int = None
 
@@ -116,24 +117,69 @@ async def login(user: UserIn):
     return {"message": "User logged in successfully", "isAuth": True, "username": user.username, "id": db_user[0]}
 
 @app.post("/add_dish")
-async def add_dish(dish: DishIn):
-    conn = sqlite3.connect(DATABASE_URL_DISHES)
-    cursor = conn.cursor()
-    dish_id = str(uuid.uuid4())
-    cursor.execute('INSERT INTO dishes (id, user_id, name, components, description, image, time, dificulty) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
-                   (dish_id, dish.user_id, dish.name, dish.components, dish.description, dish.image, dish.time, dish.dificulty))
-    conn.commit()
-    conn.close()
-    return {"message": "Dish added successfully", "id": dish_id}
+async def add_dish(
+    user_id: str = Form(...),
+    name: str = Form(...),
+    components: str = Form(...),
+    description: str = Form(None),
+    time: int = Form(None),
+    dificulty: int = Form(None),
+    image: UploadFile = File(None)
+):
+    try:
+        conn = sqlite3.connect(DATABASE_URL_DISHES)
+        cursor = conn.cursor()
+        dish_id = str(uuid.uuid4())
+        
+        image_data = None
+        if image:
+            image_data = await image.read()
+
+        cursor.execute(
+            'INSERT INTO dishes (id, user_id, name, components, description, image, time, dificulty) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
+            (dish_id, user_id, name, components, description, image_data, time, dificulty)
+        )
+        conn.commit()
+        conn.close()
+        return {"message": "Dish added successfully", "id": dish_id}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/dishes")
 async def get_dishes(username: str = Header(None)):
-    if not username:
-        raise HTTPException(status_code=400, detail="Username header missing")
-    user = get_current_user(username)
+    try:
+        if not username:
+            raise HTTPException(status_code=400, detail="Username header missing")
+        
+        user = get_current_user(username)
+        conn = sqlite3.connect(DATABASE_URL_DISHES)
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM dishes WHERE user_id = ?', (user[0],))
+        dishes = cursor.fetchall()
+        conn.close()
+
+        return [{
+            "id": dish[0],
+            "user_id": dish[1],
+            "name": dish[2],
+            "components": dish[3],
+            "description": dish[4],
+            "image": True if dish[5] else None,  # Just indicate if image exists
+            "time": dish[6],
+            "dificulty": dish[7]
+        } for dish in dishes]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/dish_image/{dish_id}")
+async def get_dish_image(dish_id: str):
     conn = sqlite3.connect(DATABASE_URL_DISHES)
     cursor = conn.cursor()
-    cursor.execute('SELECT * FROM dishes WHERE user_id = ?', (user[0],))
-    dishes = cursor.fetchall()
+    cursor.execute('SELECT image FROM dishes WHERE id = ?', (dish_id,))
+    image_data = cursor.fetchone()
     conn.close()
-    return [{"id": dish[0], "user_id": dish[1], "name": dish[2], "components": dish[3], "description": dish[4], "image": dish[5], "time": dish[6], "dificulty": dish[7]} for dish in dishes]
+
+    if not image_data or not image_data[0]:
+        raise HTTPException(status_code=404, detail="Image not found")
+
+    return Response(content=image_data[0], media_type="image/png")

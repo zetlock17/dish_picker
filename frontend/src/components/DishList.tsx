@@ -1,20 +1,9 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
 import { setDishes } from '../store/slices/dishSlice';
 import { RootState } from '../store/store';
+import DishCard, { Dish } from './DishCard';
 import '../styles/components/dish-list.scss';
-
-interface Dish {
-    id: string;
-    user_id: string;
-    name: string;
-    components: string;
-    description?: string;
-    image?: string;
-    time?: number;
-    dificulty?: number;
-}
 
 const DishList: React.FC = () => {
     const dispatch = useDispatch();
@@ -25,24 +14,27 @@ const DishList: React.FC = () => {
         const fetchDishes = async () => {
             try {
                 const username = localStorage.getItem('username');
+                if (!username) {
+                    throw new Error('No username found');
+                }
+
                 const response = await fetch('http://127.0.0.1:8000/dishes', {
+                    method: 'GET',
                     headers: {
-                        'username': username || ''
+                        'username': username,
+                        'Accept': 'application/json'
                     }
                 });
                 
                 if (!response.ok) {
-                    throw new Error('Failed to fetch dishes');
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Failed to fetch dishes');
                 }
 
                 const data = await response.json();
-                if (Array.isArray(data)) {
-                    dispatch(setDishes(data));
-                } else {
-                    setError('Invalid data format');
-                }
+                dispatch(setDishes(data));
             } catch (error) {
-                setError('Failed to fetch dishes');
+                setError(error instanceof Error ? error.message : 'Failed to fetch dishes');
                 console.error('Error fetching dishes:', error);
             }
         };
@@ -51,22 +43,14 @@ const DishList: React.FC = () => {
     }, [dispatch]);
 
     if (error) {
-        return <div>{error}</div>;
+        return <div className="error-message">{error}</div>;
     }
 
     return (
-        <div>
-            <div className="dish-list">
-                {dishes.map((dish) => (
-                    <Link to={`/dish/${dish.id}`} key={dish.id} className="dish-card-link">
-                        <div className="dish-card">
-                            <h3>{dish.name}</h3>
-                            <p>{dish.description}</p>
-                            {dish.image && <img src={dish.image} alt={dish.name} />}
-                        </div>
-                    </Link>
-                ))}
-            </div>
+        <div className="dish-list">
+            {dishes.map((dish) => (
+                <DishCard key={dish.id} dish={dish} />
+            ))}
         </div>
     );
 };
