@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 export interface Dish {
     id: string;
@@ -18,9 +18,10 @@ interface DishCardProps {
 
 const DishCard: React.FC<DishCardProps> = ({ dish }) => {
     const imageUrl = dish.image ? `http://127.0.0.1:8000/dish_image/${dish.id}` : null;
+    const location = useLocation();
 
     return (
-        <Link to={`/dish/${dish.id}`} className="dish-card-link">
+        <Link to={`/dish/${dish.id}?fromDishId=${location.pathname.split('/').pop()}`} className="dish-card-link">
             <div className="dish-card">
                 <h3>{dish.name}</h3>
                 <p>{dish.description}</p>

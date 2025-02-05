@@ -1,0 +1,120 @@
+@import '../variables';
+@import '../mixins';
+
+.carousel {
+    margin: 20px 0;
+    padding: 20px;
+    position: relative;
+    
+    h2 {
+        text-align: center;
+        margin-bottom: $spacing-lg;
+    }
+    
+    &-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        width: 100%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    &-item {
+        @include card;
+        text-decoration: none;
+        color: inherit;
+        text-align: center;
+        
+        img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+        }
+    }
+    
+    &-items {
+        display: flex;
+        gap: $spacing-lg;
+        overflow: hidden;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    &-controls {
+        @include flexCenter;
+        gap: $spacing-md;
+        margin-top: $spacing-md;
+        
+        button {
+            padding: $spacing-md $spacing-lg;
+            border: none;
+            background: $primary-color;
+            color: white;
+            border-radius: 50%;
+            cursor: pointer;
+            
+            &:hover {
+                background: darken($primary-color, 10%);
+            }
+        }
+    }
+
+    &-button {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.5);
+        color: white;
+        border: none;
+        padding: $spacing-md $spacing-lg;
+        cursor: pointer;
+        font-size: 24px;
+        z-index: 1;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        @include flexCenter;
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        &.prev {
+            left: 10px;
+        }
+
+        &.next {
+            right: 10px;
+        }
+    }
+}
+
+.similar-dishes {
+    margin-top: $spacing-xl;
+    
+    &-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: $spacing-lg;
+        margin-top: $spacing-md;
+    }
+}
+
+.similar-dish-card {
+    @include card;
+    text-decoration: none;
+    color: inherit;
+    text-align: center;
+    
+    img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+    }
+    
+    &:hover {
+        transform: scale(1.05);
+    }
+}

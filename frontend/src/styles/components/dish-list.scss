@@ -5,14 +5,14 @@
     display: flex;
     flex-wrap: wrap;
     gap: $spacing-lg;
-    justify-content: center; /* Центрирование карточек */
+    justify-content: center;
 }
 
 .dish-card {
     &-link {
         text-decoration: none;
         color: inherit;
-        flex: 0 1 $card-width; /* Фиксированная ширина карточки */
+        flex: 0 1 $card-width;
         max-width: $card-width;
     }
 
@@ -20,7 +20,7 @@
         transform: scale(1.05);
     }
 
-    width: 100%; /* Обеспечивает фиксированную ширину карточки */
+    width: 100%;
     box-sizing: border-box;
     @include card;
     @include transition;
@@ -40,7 +40,32 @@
         overflow: hidden;
         text-overflow: ellipsis;
         width: 100%;
-        max-width: 250px; /* Ограничение ширины заголовка */
+        max-width: 250px;
+    }
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: $spacing-lg;
+
+    .page-button {
+        background: $primary-color;
+        color: white;
+        border: none;
+        padding: $spacing-sm $spacing-md;
+        margin: 0 $spacing-sm;
+        cursor: pointer;
+        border-radius: 4px;
+        @include transition;
+
+        &.active {
+            background: darken($primary-color, 10%);
+        }
+
+        &:hover {
+            background: lighten($primary-color, 10%);
+        }
     }
 }
 

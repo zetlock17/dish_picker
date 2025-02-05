@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
+import SimilarDishes from './SimilarDishes';
 
 interface DishPageProps {}
 
 const DishPage: React.FC<DishPageProps> = () => {
     const { id } = useParams<{ id: string }>();
+    const location = useLocation();
     const dish = useSelector((state: RootState) =>
         state.dishes.dishes.find((dish) => dish.id === id)
     );
@@ -42,6 +44,8 @@ const DishPage: React.FC<DishPageProps> = () => {
             <p>Компоненты: {dish.components}</p>
             {dish.time && <p>Время приготовления: {dish.time} минут</p>}
             {dish.dificulty && <p>Сложность: {dish.dificulty}</p>}
+
+            {id && <SimilarDishes dishId={id} />}
         </div>
     );
 };

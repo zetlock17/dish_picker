@@ -266,3 +266,114 @@ async def record_visit(dish_id: str, username: str = Header(None)):
     conn.commit()
     conn.close()
     return {"message": "Visit recorded successfully"}
+
+@app.get("/recommendations")
+async def get_recommendations(username: str = Header(None)):
+    if not username:
+        raise HTTPException(status_code=400, detail="Username header missing")
+    
+    user = get_current_user(username)
+    user_id = user[0]
+    
+    conn = sqlite3.connect(DATABASE_URL_DISHES)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT DISTINCT i.name 
+        FROM dish_visits v
+        JOIN dish_ingredients di ON v.dish_id = di.dish_id
+        JOIN ingredients i ON di.ingredient_id = i.id
+        WHERE v.user_id = ?
+        ORDER BY v.visit_date DESC
+        LIMIT 20
+    ''', (user_id,))
+    
+    recent_ingredients = cursor.fetchall()
+    ingredient_names = [ing[0] for ing in recent_ingredients]
+    
+    placeholders = ','.join('?' * len(ingredient_names))
+    cursor.execute(f'''
+        SELECT d.*, COUNT(DISTINCT i.name) as matching_ingredients
+        FROM dishes d
+        JOIN dish_ingredients di ON d.id = di.dish_id
+        JOIN ingredients i ON di.ingredient_id = i.id
+        WHERE i.name IN ({placeholders})
+        AND d.id NOT IN (
+            SELECT dish_id 
+            FROM dish_visits 
+            WHERE user_id = ?
+        )
+        GROUP BY d.id
+        ORDER BY matching_ingredients DESC
+        LIMIT 10
+    ''', (*ingredient_names, user_id))
+    
+    recommended_dishes = cursor.fetchall()
+    conn.close()
+    
+    return [{
+        "id": dish[0],
+        "user_id": dish[1],
+        "name": dish[2],
+        "components": dish[3],
+        "description": dish[4],
+        "image": True if dish[5] else None,
+        "time": dish[6],
+        "dificulty": dish[7]
+    } for dish in recommended_dishes]
+
+@app.get("/similar-dishes/{dish_id}")
+async def get_similar_dishes(dish_id: str):
+    conn = sqlite3.connect(DATABASE_URL_DISHES)
+    cursor = conn.cursor()
+    
+    cursor.execute('''
+        SELECT i.name
+        FROM dish_ingredients di
+        JOIN ingredients i ON di.ingredient_id = i.id
+        WHERE di.dish_id = ?
+    ''', (dish_id,))
+    
+    current_ingredients = cursor.fetchall()
+    ingredient_names = [ing[0] for ing in current_ingredients]
+    
+    if not ingredient_names:
+        return []
+    
+    placeholders = ','.join('?' * len(ingredient_names))
+    cursor.execute(f'''
+        SELECT 
+            d.id,
+            d.user_id,
+            d.name,
+            d.components,
+            d.description,
+            d.image,
+            d.time,
+            d.dificulty,
+            COUNT(DISTINCT i.name) as matching_ingredients
+        FROM dishes d
+        JOIN dish_ingredients di ON d.id = di.dish_id
+        JOIN ingredients i ON di.ingredient_id = i.id
+        WHERE i.name IN ({placeholders})
+        AND d.id != ?
+        GROUP BY d.id
+        HAVING matching_ingredients > 0
+        ORDER BY matching_ingredients DESC
+        LIMIT 5
+    ''', (*ingredient_names, dish_id))
+    
+    similar_dishes = cursor.fetchall()
+    conn.close()
+    
+    return [{
+        "id": dish[0],
+        "user_id": dish[1],
+        "name": dish[2],
+        "components": dish[3],
+        "description": dish[4],
+        "image": True if dish[5] else None,
+        "time": dish[6],
+        "dificulty": dish[7],
+        "matching_ingredients": dish[8]
+    } for dish in similar_dishes]

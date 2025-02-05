@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { setDishes } from '../store/slices/dishSlice';
 import { RootState } from '../store/store';
@@ -8,7 +8,9 @@ import '../styles/components/dish-list.scss';
 const DishList: React.FC = () => {
     const dispatch = useDispatch();
     const dishes = useSelector((state: RootState) => state.dishes.dishes);
-    const [error, setError] = React.useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 21;
 
     useEffect(() => {
         const fetchDishes = async () => {
@@ -42,15 +44,36 @@ const DishList: React.FC = () => {
         fetchDishes();
     }, [dispatch]);
 
+    const handlePageChange = (pageNumber: number) => {
+        setCurrentPage(pageNumber);
+    };
+
+    const totalPages = Math.ceil(dishes.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentDishes = dishes.slice(startIndex, startIndex + itemsPerPage);
+
     if (error) {
         return <div className="error-message">{error}</div>;
     }
 
     return (
-        <div className="dish-list">
-            {dishes.map((dish) => (
-                <DishCard key={dish.id} dish={dish} />
-            ))}
+        <div>
+            <div className="dish-list">
+                {currentDishes.map((dish) => (
+                    <DishCard key={dish.id} dish={dish} />
+                ))}
+            </div>
+            <div className="pagination">
+                {Array.from({ length: totalPages }, (_, index) => (
+                    <button
+                        key={index + 1}
+                        className={`page-button ${currentPage === index + 1 ? 'active' : ''}`}
+                        onClick={() => handlePageChange(index + 1)}
+                    >
+                        {index + 1}
+                    </button>
+                ))}
+            </div>
         </div>
     );
 };
