@@ -37,16 +37,14 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose }) => {
             return;
         }
 
-        if (dificulty && (dificulty < 1 || dificulty > 10)) {
-            alert('Пожалуйста, введите сложность в диапазоне от 1 до 10.');
-            setDificulty('');
-            return;
-        }
-
         try {
             const userId = localStorage.getItem('userId');
+            if (!userId) {
+                throw new Error('User ID not found');
+            }
+
             const formData = new FormData();
-            formData.append('user_id', userId || '');
+            formData.append('user_id', userId);
             formData.append('name', name);
             formData.append('components', components);
             
@@ -57,38 +55,41 @@ const AddDishModal: React.FC<AddDishModalProps> = ({ isOpen, onClose }) => {
 
             const response = await fetch('http://127.0.0.1:8000/add_dish', {
                 method: 'POST',
+                headers: {
+                    'username': localStorage.getItem('username') || '',
+                },
                 body: formData
             });
 
-            if (response.ok) {
-                const data = await response.json();
-                dispatch(addDish({ 
-                    id: data.id,
-                    user_id: userId || '',
-                    name,
-                    components,
-                    description,
-                    image: data.id,
-                    time: time ? Number(time) : undefined,
-                    dificulty: dificulty ? Number(dificulty) : undefined
-                }));
-                
-                // Clear form
-                setName('');
-                setComponents('');
-                setDescription('');
-                setImageFile(null);
-                setImagePreview(null);
-                setTime('');
-                setDificulty('');
-                onClose();
-            } else {
+            if (!response.ok) {
                 const errorData = await response.json();
-                throw new Error(errorData.detail);
+                throw new Error(errorData.detail || 'Failed to add dish');
             }
+
+            const data = await response.json();
+            dispatch(addDish({ 
+                id: data.id,
+                user_id: userId,
+                name,
+                components,
+                description,
+                image: imageFile ? data.id : undefined,
+                time: time || undefined,
+                dificulty: dificulty || undefined
+            }));
+            
+            setName('');
+            setComponents('');
+            setDescription('');
+            setImageFile(null);
+            setImagePreview(null);
+            setTime('');
+            setDificulty('');
+            onClose();
+
         } catch (error) {
+            console.error('Error adding dish:', error);
             alert(`Ошибка при добавлении блюда: ${error instanceof Error ? error.message : 'Неизвестная ошибка'}`);
-            console.error(error);
         }
     };
 

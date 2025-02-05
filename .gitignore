@@ -1,3 +1,4 @@
 /frontend/node_modules
-/backend/databases/testDishes.db
-/backend/databases/testUsers.db
+/backend/databases/dishes.db
+/backend/databases/users.db
+# /backend/populate_diahes.py

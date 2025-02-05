@@ -5,6 +5,8 @@ from pydantic import BaseModel
 import sqlite3
 import uuid
 import base64
+from datetime import datetime
+from typing import List, Optional
 
 app = FastAPI()
 
@@ -16,8 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-DATABASE_URL_USERS = "./databases/testUsers.db"
-DATABASE_URL_DISHES = "./databases/testDishes.db"
+DATABASE_URL_USERS = "./databases/users.db"
+DATABASE_URL_DISHES = "./databases/dishes.db"
 
 def create_tables():
     conn = sqlite3.connect(DATABASE_URL_USERS)
@@ -34,18 +36,50 @@ def create_tables():
 
     conn = sqlite3.connect(DATABASE_URL_DISHES)
     cursor = conn.cursor()
-    cursor.execute('DROP TABLE IF EXISTS dishes')
     cursor.execute('''
-        CREATE TABLE dishes (
+        CREATE TABLE IF NOT EXISTS dishes (
             id TEXT PRIMARY KEY,
             user_id TEXT NOT NULL,
             name TEXT NOT NULL,
             components TEXT NOT NULL,
             description TEXT,
+            methode TEXT,
             image BLOB,
             time INTEGER,
             dificulty INTEGER,
             FOREIGN KEY (user_id) REFERENCES users (id)
+        )
+    ''')
+    conn.commit()
+    conn.close()
+
+    conn = sqlite3.connect(DATABASE_URL_DISHES)
+    cursor = conn.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS dish_visits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id TEXT NOT NULL,
+            dish_id TEXT NOT NULL,
+            visit_date TIMESTAMP NOT NULL,
+            FOREIGN KEY (user_id) REFERENCES users (id),
+            FOREIGN KEY (dish_id) REFERENCES dishes (id)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS ingredients (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS dish_ingredients (
+            dish_id TEXT,
+            ingredient_id TEXT,
+            PRIMARY KEY (dish_id, ingredient_id),
+            FOREIGN KEY (dish_id) REFERENCES dishes (id),
+            FOREIGN KEY (ingredient_id) REFERENCES ingredients (id)
         )
     ''')
     conn.commit()
@@ -79,6 +113,18 @@ class Dish(BaseModel):
     image: str = None
     time: int = None
     dificulty: int = None
+
+class IngredientAmount(BaseModel):
+    name: str
+    amount: float
+    unit: str
+
+class DishCreate(BaseModel):
+    name: str
+    components: str 
+    description: Optional[str] = None
+    time: Optional[int] = None
+    difficulty: Optional[int] = None
 
 def get_current_user(username: str):
     conn = sqlite3.connect(DATABASE_URL_USERS)
@@ -118,32 +164,48 @@ async def login(user: UserIn):
 
 @app.post("/add_dish")
 async def add_dish(
-    user_id: str = Form(...),
     name: str = Form(...),
     components: str = Form(...),
     description: str = Form(None),
     time: int = Form(None),
     dificulty: int = Form(None),
+    user_id: str = Form(...),
     image: UploadFile = File(None)
 ):
-    try:
-        conn = sqlite3.connect(DATABASE_URL_DISHES)
-        cursor = conn.cursor()
-        dish_id = str(uuid.uuid4())
+    conn = sqlite3.connect(DATABASE_URL_DISHES)
+    cursor = conn.cursor()
+    dish_id = str(uuid.uuid4())
+  
+    cursor.execute(
+        'INSERT INTO dishes (id, user_id, name, components, description, time, dificulty) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        (dish_id, user_id, name, components, description, time, dificulty)
+    )
+    
+    ingredients = [ing.strip() for ing in components.split(', ') if ing.strip()]
+    
+    for ingredient_name in ingredients:
+        cursor.execute('SELECT id FROM ingredients WHERE name = ?', (ingredient_name.lower(),))
+        result = cursor.fetchone()
         
-        image_data = None
-        if image:
-            image_data = await image.read()
-
+        if result:
+            ingredient_id = result[0]
+        else:
+            ingredient_id = str(uuid.uuid4())
+            cursor.execute('INSERT INTO ingredients (id, name) VALUES (?, ?)',
+                         (ingredient_id, ingredient_name.lower()))
+        
         cursor.execute(
-            'INSERT INTO dishes (id, user_id, name, components, description, image, time, dificulty) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', 
-            (dish_id, user_id, name, components, description, image_data, time, dificulty)
+            'INSERT INTO dish_ingredients (dish_id, ingredient_id) VALUES (?, ?)',
+            (dish_id, ingredient_id)
         )
-        conn.commit()
-        conn.close()
-        return {"message": "Dish added successfully", "id": dish_id}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    
+    if image:
+        image_data = await image.read()
+        cursor.execute('UPDATE dishes SET image = ? WHERE id = ?', (image_data, dish_id))
+    
+    conn.commit()
+    conn.close()
+    return {"id": dish_id}
 
 @app.get("/dishes")
 async def get_dishes(username: str = Header(None)):
@@ -164,7 +226,7 @@ async def get_dishes(username: str = Header(None)):
             "name": dish[2],
             "components": dish[3],
             "description": dish[4],
-            "image": True if dish[5] else None,  # Just indicate if image exists
+            "image": True if dish[5] else None,
             "time": dish[6],
             "dificulty": dish[7]
         } for dish in dishes]
@@ -183,3 +245,24 @@ async def get_dish_image(dish_id: str):
         raise HTTPException(status_code=404, detail="Image not found")
 
     return Response(content=image_data[0], media_type="image/png")
+
+@app.post("/record_visit/{dish_id}")
+async def record_visit(dish_id: str, username: str = Header(None)):
+    if not username:
+        raise HTTPException(status_code=400, detail="Username header missing")
+    
+    user = get_current_user(username)
+    user_id = user[0]
+    
+    conn = sqlite3.connect(DATABASE_URL_DISHES)
+    cursor = conn.cursor()
+    visit_date = datetime.now().isoformat()
+    
+    cursor.execute(
+        'INSERT INTO dish_visits (user_id, dish_id, visit_date) VALUES (?, ?, ?)',
+        (user_id, dish_id, visit_date)
+    )
+    
+    conn.commit()
+    conn.close()
+    return {"message": "Visit recorded successfully"}
