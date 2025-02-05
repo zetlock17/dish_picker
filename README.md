@@ -17,7 +17,7 @@
    git clone https://github.com/zetlock17/dish_picker
    cd dish_picker
    ```
-2. Установка и запуск backend (файла с завиимостями еще нет, сорямба): 
+2. Установка и запуск backend (файла с завиимостями еще нет, качайте нужные либы сами, сорямба): 
    ```sh
    cd backend
    pip install -r requirements.txt
